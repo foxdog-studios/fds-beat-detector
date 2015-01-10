@@ -2,7 +2,7 @@
 
 Package.describe({
   summary: 'Beat detection with reactivity',
-  version: '0.0.1',
+  version: '0.0.2',
   name: 'fds:beat-detector',
   git: 'https://github.com/foxdog-studios/fds-beat-detector.git'
 });
@@ -21,6 +21,7 @@ Package.onUse(function (api) {
   api.addFiles('lib/client/beat_detector.coffee', 'client');
   api.addFiles('lib/client/beat_detector_visualisation.coffee', 'client');
   api.addFiles('lib/client/beat_manager.coffee', 'client');
+  api.addFiles('lib/client/click_track_player.coffee', 'client');
 });
 
 

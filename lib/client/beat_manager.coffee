@@ -6,7 +6,7 @@ MAX_BPM = 253
 SAMPLE_RATE = 44100
 CHANNELS = 1
 
-getAudioContext = ->
+BeatDetector.getAudioContext = ->
   AudioContext = window.AudioContext or window.webkitAudioContext
   unless audioContext?
     audioContext = new AudioContext()
@@ -18,8 +18,9 @@ getOfflineAudioContext = (channels, length, sampleRate) ->
   new OfflineAudioContext(channels, length, sampleRate)
 
 class BeatDetector.BeatManager
-  constructor: ->
+  constructor: (@_audioContext) ->
     @_arrayBuffer = new ReactiveVar()
+    @_audioSample = new ReactiveVar()
     @_pcmAudioData = new ReactiveVar(false)
     @_previousAverageEnergyCoefficient = new ReactiveVar(THRESHOLD_CONSTANT)
     @_varianceCoefficient = new ReactiveVar(VARIANCE_COEFFICIENT)
@@ -41,6 +42,9 @@ class BeatDetector.BeatManager
 
   setArrayBuffer: (arrayBuffer) ->
     @_arrayBuffer.set(arrayBuffer)
+
+  getAudioSample: ->
+    @_audioSample.get()
 
   getPcmAudioData: ->
     @_pcmAudioData.get()
@@ -83,17 +87,18 @@ class BeatDetector.BeatManager
 
   _updateAudioFromArrayBuffer: (arrayBuffer) =>
     @_pcmAudioData.set null
+    @_audioSample.set null
     @_arrayBuffer.set(arrayBuffer)
 
-    audioContext = getAudioContext()
     audioSample = new BeatDetector.ArrayBufferAudioSample(arrayBuffer)
 
     # XXX: To know the correct length we need to make the offline audio context,
     # we need to decode the audio, using an AudioContext (which we also use for
     # playback).
-    audioSample.loadAudio audioContext, @_onAudioLoaded
+    audioSample.loadAudio @_audioContext, @_onAudioLoaded
 
   _onAudioLoaded: (audioSample) =>
+    @_audioSample.set(audioSample)
     pcmAudioSample = new BeatDetector.ArrayBufferAudioSample(
       @_arrayBuffer.get()
     )
