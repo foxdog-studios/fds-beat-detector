@@ -21,15 +21,20 @@ class BeatDetector.BeatManager
   constructor: ->
     @_arrayBuffer = new ReactiveVar()
     @_pcmAudioData = new ReactiveVar(false)
-    @_hasAudio = new ReactiveVar(false)
     @_previousAverageEnergyCoefficient = new ReactiveVar(THRESHOLD_CONSTANT)
     @_varianceCoefficient = new ReactiveVar(VARIANCE_COEFFICIENT)
     @_samplesPerInstantEnergy = new ReactiveVar(SAMPLES_PER_INSTANT_ENERGY)
     @_numberOfPreviousEnergies = new ReactiveVar(NUMBER_OF_PREVIOUS_SAMPLES)
     @_maxBpm = new ReactiveVar(MAX_BPM)
     @_trackLengthSeconds = new ReactiveVar(0)
-    @_currentBpm = new ReactiveVar(0)
-    @_beatDetector = new ReactiveVar(null)
+    @_currentBpm = new ReactiveVar(null)
+    @_principalBeatTime = new ReactiveVar(null)
+    @_maxEnergy = new ReactiveVar(null)
+    @_energies = new ReactiveVar([])
+    @_averageEnergies = new ReactiveVar([])
+    @_beats = new ReactiveVar([])
+    @_interpolatedBeats = new ReactiveVar([])
+    @_maximumEnergies = new ReactiveVar([])
 
   getArrayBuffer: ->
     @_arrayBuffer.get()
@@ -40,9 +45,6 @@ class BeatDetector.BeatManager
   getPcmAudioData: ->
     @_pcmAudioData.get()
 
-  hasAudio: ->
-    @_hasAudio.get()
-
   getPreviousAverageEnergyCoefficient: ->
     @_previousAverageEnergyCoefficient.get()
 
@@ -52,12 +54,35 @@ class BeatDetector.BeatManager
   getCurrentBpm: ->
     @_currentBpm.get()
 
+  getPrincipalBeatTime: ->
+    @_principalBeatTime.get()
+
+  getMaxEnergy: ->
+    @_maxEnergy.get()
+
+  getEnergies: ->
+    @_energies.get()
+
+  getAverageEnergies: ->
+    @_averageEnergies.get()
+
+  getMaximumEnergies: ->
+    @_maximumEnergies.get()
+
+  getBeats: ->
+    @_beats.get()
+
+  getInterpolatedBeats: ->
+    @_interpolatedBeats.get()
+
+  getTrackLengthSeconds: ->
+    @_trackLengthSeconds.get()
+
   fromUrl: (url) ->
     BeatDetector.loadAudioFromUrl url, @_updateAudioFromArrayBuffer
 
   _updateAudioFromArrayBuffer: (arrayBuffer) =>
     @_pcmAudioData.set null
-    @_hasAudio.set false
     @_arrayBuffer.set(arrayBuffer)
 
     audioContext = getAudioContext()
@@ -69,8 +94,6 @@ class BeatDetector.BeatManager
     audioSample.loadAudio audioContext, @_onAudioLoaded
 
   _onAudioLoaded: (audioSample) =>
-    @_hasAudio.set true
-
     pcmAudioSample = new BeatDetector.ArrayBufferAudioSample(
       @_arrayBuffer.get()
     )
@@ -100,5 +123,11 @@ class BeatDetector.BeatManager
       @_maxBpm.get()
     )
     @_currentBpm.set beatDetector.bpm
-    @_beatDetector.set(beatDetector)
+    @_principalBeatTime.set beatDetector.principalBeatTime
+    @_maxEnergy.set beatDetector.maxEnergy
+    @_energies.set beatDetector.energies
+    @_averageEnergies.set beatDetector.averageEnergies
+    @_beats.set beatDetector.beats
+    @_interpolatedBeats.set beatDetector.interpolatedBeats
+    @_maximumEnergies.set beatDetector.maximumEnergies
 
