@@ -12,9 +12,14 @@ Package.onUse(function (api) {
 
   api.use([
     'coffeescript',
+    'reactive-var'
   ]);
 
+  api.addFiles('lib/beat_detector.coffee', 'client');
+  api.addFiles('lib/client/audio_sample.coffee', 'client');
+  api.addFiles('lib/client/pcm_audio_data_generator.coffee', 'client');
   api.addFiles('lib/client/beat_detector.coffee', 'client');
+  api.addFiles('lib/client/beat_manager.coffee', 'client');
 });
 
 

@@ -1,4 +1,4 @@
-class @BeatDetector
+class BeatDetector.BeatDetector
   SAMPLE_RATE = 44100
   BEAT_MIN_DISTANCE_SAMPLES = 10000
   MAX_DISTANCE_MULTIPLIER = 32
@@ -298,10 +298,4 @@ class @BeatDetector
       @beats.push nextTime
       @interpolatedBeats.push nextTime
       nextTime += meanLength
-
-
-
-
-
-
 
