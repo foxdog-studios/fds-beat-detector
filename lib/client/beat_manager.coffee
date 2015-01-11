@@ -3,7 +3,6 @@ VARIANCE_COEFFICIENT = 0
 SAMPLES_PER_INSTANT_ENERGY = 300
 NUMBER_OF_PREVIOUS_SAMPLES = 42
 MAX_BPM = 253
-SAMPLE_RATE = 44100
 CHANNELS = 1
 
 BeatDetector.getAudioContext = ->
@@ -123,9 +122,9 @@ class BeatDetector.BeatManager
       @_arrayBuffer.get()
     )
     length = audioSample.buffer.length
-    @_trackLengthSeconds.set length / SAMPLE_RATE
+    @_trackLengthSeconds.set length / @_audioContext.sampleRate
     offlineAudioContext = \
-        getOfflineAudioContext(CHANNELS, length, SAMPLE_RATE)
+        getOfflineAudioContext(CHANNELS, length, @_audioContext.sampleRate)
     pcmAudioGenerator = new BeatDetector.PcmAudioGenerator()
     pcmAudioGenerator.getPcmAudioData(
       offlineAudioContext,
@@ -145,4 +144,5 @@ class BeatDetector.BeatManager
       samplesPerInstantEnergy: @_samplesPerInstantEnergy.get()
       numberOfPreviousSamples: @_numberOfPreviousEnergies.get()
       maxBpm: @_maxBpm.get()
+      sampleRate: @_audioContext.sampleRate
 

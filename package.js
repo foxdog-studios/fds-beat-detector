@@ -2,7 +2,7 @@
 
 Package.describe({
   summary: 'Beat detection with reactivity',
-  version: '0.0.6',
+  version: '0.0.7',
   name: 'fds:beat-detector',
   git: 'https://github.com/foxdog-studios/fds-beat-detector.git'
 });

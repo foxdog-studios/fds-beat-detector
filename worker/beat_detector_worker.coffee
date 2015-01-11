@@ -1,8 +1,8 @@
 class BeatDetector
-  SAMPLE_RATE = 44100
   BEAT_MIN_DISTANCE_SAMPLES = 10000
   MAX_DISTANCE_MULTIPLIER = 32
   MAX_BPM_DETECTED = 300
+  TARGET_SAMPLE_RATE = 44100
 
   MAX_SEARCH_WINDOW_SIZE = 3
   MINIMUM_THRESHOLD = 1
@@ -14,9 +14,18 @@ class BeatDetector
                 @_previousAverageEnergyCoefficient,
                 @_samplesPerInstantEnergy,
                 @_numberOfPreviousEnergies,
-                @_maxBpm) ->
+                @_maxBpm,
+                @_sampleRate) ->
 
-    @_trackLength = pcmAudioData.length / SAMPLE_RATE
+    @_samplesPerInstantEnergy = Math.floor(
+      @_samplesPerInstantEnergy * @_sampleRate / TARGET_SAMPLE_RATE
+    )
+
+    @_numberOfPreviousEnergies = Math.floor(
+      @_numberOfPreviousEnergies * @_sampleRate / TARGET_SAMPLE_RATE
+    )
+
+    @_trackLength = pcmAudioData.length / @_sampleRate
 
     @maximumEnergies = []
 
@@ -62,7 +71,7 @@ class BeatDetector
         @maxEnergy = instantEnergySum
 
       # The current time in seconds we are at in the audio data.
-      currentTimeSeconds = i / SAMPLE_RATE
+      currentTimeSeconds = i / @_sampleRate
 
       # Save the current instant energy
       @energies.push [currentTimeSeconds, instantEnergySum]
@@ -240,7 +249,7 @@ class BeatDetector
       @beats.splice(index, 1)
 
   _getSecondsPerInstantEnergy: ->
-    @_samplesPerInstantEnergy / SAMPLE_RATE
+    @_samplesPerInstantEnergy / @_sampleRate
 
   distanceToTime: (distance) ->
     secondsPerInstantEnegy = @_getSecondsPerInstantEnergy()
@@ -310,6 +319,7 @@ main = ->
       data.samplesPerInstantEnergy
       data.numberOfPreviousSamples
       data.maxBpm
+      data.sampleRate
     )
     self.postMessage
       bpm: beatDetector.bpm
