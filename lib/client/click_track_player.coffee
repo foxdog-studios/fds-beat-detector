@@ -1,62 +1,92 @@
 class BeatDetector.ClickTrackPlayer
   constructor: (@_audioContext, @_timeline, @_beatFlash) ->
+    @_playing = new ReactiveVar(false)
+    @_frameHandle = null
+    @_playWithClick = new ReactiveVar(false)
+    @_playbackRate = new ReactiveVar(1)
     BeatDetector.loadAudioFromUrl '/metronome.ogg', (arrayBuffer) =>
       @_metronomeAudioSample = new BeatDetector.ArrayBufferAudioSample(
         arrayBuffer)
       @_metronomeAudioSample.loadAudio @_audioContext
 
-  play: (beatManager, playWithClick) ->
-    @_beatsClone = beatManager.getBeats().slice(0)
-    @_audioSample = beatManager.getAudioSample()
-    @_trackStartTime = 0
-    return unless @_audioSample?
+  getPlaybackRate: ->
+    @_playbackRate.get()
+
+  setPlaybackRate: (playbackRate) ->
+    @_playbackRate.set(playbackRate)
+
+  play: (@_beatManager, options = {}) ->
+    options = _.defaults options,
+      startTime: 0
+
+    @stop()
+
+    @_playing.set true
+
+    @_beatsClone = @_beatManager.getBeats().slice(0)
+    @_trackStartTime = options.startTime / @_playbackRate.get()
 
     @_metronomeClickHasBeenScheduled = false
 
-    @_trackLength = beatManager.getTrackLengthSeconds()
+    @_trackLength = @_beatManager.getTrackLengthSeconds()
 
     while @_beatsClone.length and @_beatsClone[0] < @_trackStartTime
       @_beatsClone.splice(0, 1)
 
-    if @_audioSample.playing
-      return @_audioSample.stop()
-    gain = if playWithClick
-      0.3
-    else
-      1
-    @_audioSample.tryPlay(@_trackStartTime, gain)
     @_startTime = @_audioContext.currentTime
 
-    requestAnimationFrame(@_update)
+    @_frameHandle = requestAnimationFrame(@_update)
+
+  stop: ->
+    if @_frameHandle?
+      cancelAnimationFrame @_frameHandle
+    @_playing.set false
+
+  isPlaying: ->
+    @_playing.get()
+
+  setPlayWithClick: (state) ->
+    @_playWithClick.set state
+
+  getPlayWithClick: ->
+    @_playWithClick.get()
 
   _update: =>
-    playbackTime = @_audioContext.currentTime - @_startTime + @_trackStartTime
+    @_frameHandle = null
+
+    playbackTime = @_audioContext.currentTime - @_startTime + \
+      @_trackStartTime / @_playbackRate.get()
+    @_trackLength = @_beatManager.getTrackLengthSeconds() / @_playbackRate.get()
     if playbackTime > @_trackLength
-      @_audioSample.stop()
-      Session.set 'playing', @_audioSample.playing
       @_timeline.render(@_trackStartTime, @_trackStartTime, @_trackLength)
-    return unless @_audioSample.playing
+      @_playing.set false
+
+    unless @_playing.get()
+      return
+
     @_timeline.render(playbackTime, @_trackStartTime, @_trackLength)
+
     # Schedule metronome clicks so we they happen accurately
     # see:
     # http://www.html5rocks.com/en/tutorials/audio/scheduling/
-    if not @_metronomeClickHasBeenScheduled and \
-        @_metronomeAudioSample? \
-        and @_beatsClone.length > 0
+    if not @_metronomeClickHasBeenScheduled \
+        and @_metronomeAudioSample? \
+        and @_beatsClone.length > 0 \
+        and @_playWithClick.get()
       nextBeatScheduleTime = @_audioContext.currentTime \
-          - playbackTime + @_beatsClone[0]
+          - playbackTime + @_beatsClone[0] / @_playbackRate.get()
       @_metronomeAudioSample.tryPlay(
         undefined,
         undefined,
         nextBeatScheduleTime
       )
       @_metronomeClickHasBeenScheduled = true
-    if @_beatsClone.length > 0 and @_beatsClone[0] <= playbackTime
+
+    if @_beatsClone.length > 0 \
+        and @_beatsClone[0] / @_playbackRate.get() <= playbackTime
       #Beat!
-      if @_beatsClone.length > 2
-        beatTime = @_beatsClone[1] - @_beatsClone[0]
       @_beatFlash.render(50)
       @_beatsClone.splice(0, 1)
       @_metronomeClickHasBeenScheduled = false
-    requestAnimationFrame(@_update)
+    @_frameHandle = requestAnimationFrame(@_update)
 

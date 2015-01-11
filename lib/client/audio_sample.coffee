@@ -9,15 +9,24 @@ BeatDetector.loadAudioFromUrl = (url, callback) ->
 
 class AbstractAudioSample
   constructor:  ->
+    @_playbackRate = 1
     @playing = false
 
   loadAudio: ->
     throw 'Load Audio must be implemented by subclass'
 
+  setPlaybackRate: (@_playbackRate) ->
+    @_setPlaybackRate()
+
+  _setPlaybackRate: ->
+    if @source?
+      @source.playbackRate.value = @_playbackRate
+
   tryPlay: (offset, gain, _when = 0) ->
     return unless @buffer?
     @source = @_ctx.createBufferSource()
     @source.buffer = @buffer
+    @_setPlaybackRate()
 
     gainNode = @_ctx.createGain()
     if gain?

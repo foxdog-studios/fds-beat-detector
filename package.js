@@ -24,6 +24,8 @@ Package.onUse(function (api) {
   api.addFiles('lib/client/click_track_player.coffee', 'client');
   api.addFiles('lib/client/timeline.coffee', 'client');
   api.addFiles('lib/client/beat_flash.coffee', 'client');
+  api.addFiles('lib/client/visualisation.coffee', 'client');
+  api.addFiles('lib/client/style/style.css', 'client');
 });
 
 
