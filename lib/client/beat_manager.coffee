@@ -17,6 +17,12 @@ getOfflineAudioContext = (channels, length, sampleRate) ->
       window.OfflineAudioContext or window.webkitOfflineAudioContext
   new OfflineAudioContext(channels, length, sampleRate)
 
+
+getWorker = ->
+  workerUrl = \
+    '/packages/fds_beat-detector/lib/assets/worker/beat_detector_worker.js'
+  new Worker workerUrl
+
 class BeatDetector.BeatManager
   constructor: (@_audioContext) ->
     @_arrayBuffer = new ReactiveVar()
@@ -36,6 +42,20 @@ class BeatDetector.BeatManager
     @_beats = new ReactiveVar([])
     @_interpolatedBeats = new ReactiveVar([])
     @_maximumEnergies = new ReactiveVar([])
+    @_worker = getWorker()
+
+    @_worker.addEventListener 'message', @_onWorkerMessage
+
+  _onWorkerMessage: (event) =>
+    beatDetector = event.data
+    @_currentBpm.set beatDetector.bpm
+    @_principalBeatTime.set beatDetector.principalBeatTime
+    @_maxEnergy.set beatDetector.maxEnergy
+    @_energies.set beatDetector.energies
+    @_averageEnergies.set beatDetector.averageEnergies
+    @_beats.set beatDetector.beats
+    @_interpolatedBeats.set beatDetector.interpolatedBeats
+    @_maximumEnergies.set beatDetector.maximumEnergies
 
   getArrayBuffer: ->
     @_arrayBuffer.get()
@@ -118,21 +138,11 @@ class BeatDetector.BeatManager
     @_updateBeats()
 
   _updateBeats: ->
-    beatDetector = new BeatDetector.BeatDetector()
-    beatDetector.detectBeats(
-      @_pcmAudioData.get(),
-      @_varianceCoefficient.get(),
-      @_previousAverageEnergyCoefficient.get(),
-      @_samplesPerInstantEnergy.get(),
-      @_numberOfPreviousEnergies.get(),
-      @_maxBpm.get()
-    )
-    @_currentBpm.set beatDetector.bpm
-    @_principalBeatTime.set beatDetector.principalBeatTime
-    @_maxEnergy.set beatDetector.maxEnergy
-    @_energies.set beatDetector.energies
-    @_averageEnergies.set beatDetector.averageEnergies
-    @_beats.set beatDetector.beats
-    @_interpolatedBeats.set beatDetector.interpolatedBeats
-    @_maximumEnergies.set beatDetector.maximumEnergies
+    @_worker.postMessage
+      pcmData: @_pcmAudioData.get()
+      previousEnergyVarianceCoefficient: @_varianceCoefficient.get()
+      previousAverageEnergyCoefficient: @_previousAverageEnergyCoefficient.get(),
+      samplesPerInstantEnergy: @_samplesPerInstantEnergy.get()
+      numberOfPreviousSamples: @_numberOfPreviousEnergies.get()
+      maxBpm: @_maxBpm.get()
 

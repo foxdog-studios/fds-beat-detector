@@ -2,7 +2,7 @@
 
 Package.describe({
   summary: 'Beat detection with reactivity',
-  version: '0.0.5',
+  version: '0.0.6',
   name: 'fds:beat-detector',
   git: 'https://github.com/foxdog-studios/fds-beat-detector.git'
 });
@@ -28,6 +28,11 @@ Package.onUse(function (api) {
   api.addFiles('lib/client/visualisation.coffee', 'client');
   api.addFiles('lib/client/style/style.css', 'client');
   api.addFiles('lib/assets/metronome.ogg', 'client');
+  api.addFiles(
+    'lib/assets/worker/beat_detector_worker.js',
+    'client',
+    {isAsset: true}
+  );
 });
 
 

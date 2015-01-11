@@ -1,0 +1,14 @@
+{
+  "name": "beat-detector",
+  "version": "0.0.0",
+  "description": "beat detector",
+  "repository": "",
+  "author": "Foxdog Studfios",
+  "license": "Apache 2",
+  "dependencies": {
+    "grunt": "~0.4.0",
+    "grunt-contrib-coffee": "0.12.0",
+    "grunt-contrib-watch": "0.6.1"
+  }
+}
+

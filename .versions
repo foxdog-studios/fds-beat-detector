@@ -1,5 +1,6 @@
 coffeescript@1.0.5
-fds:beat-detector@0.0.4
+fds:beat-detector@0.0.5
+jquery@1.0.2
 meteor@1.1.4
 reactive-var@1.0.4
 tracker@1.0.4

@@ -1,4 +1,4 @@
-class BeatDetector.BeatDetector
+class BeatDetector
   SAMPLE_RATE = 44100
   BEAT_MIN_DISTANCE_SAMPLES = 10000
   MAX_DISTANCE_MULTIPLIER = 32
@@ -297,4 +297,28 @@ class BeatDetector.BeatDetector
       @beats.push nextTime
       @interpolatedBeats.push nextTime
       nextTime += meanLength
+
+main = ->
+  self.addEventListener 'message', (event) ->
+    data = event.data
+    pcmData = data.pcmData
+    beatDetector = new BeatDetector()
+    beatDetector.detectBeats(
+      data.pcmData
+      data.previousEnergyVarianceCoefficient
+      data.previousAverageEnergyCoefficient
+      data.samplesPerInstantEnergy
+      data.numberOfPreviousSamples
+      data.maxBpm
+    )
+    self.postMessage
+      bpm: beatDetector.bpm
+      principalBeatTime: beatDetector.principalBeatTime
+      maxEnergy: beatDetector.maxEnergy
+      energies: beatDetector.energies
+      averageEnergies: beatDetector.averageEnergies
+      beats: beatDetector.beats
+      interpolatedBeats: beatDetector.interpolatedBeats
+      maximumEnergies: beatDetector.maximumEnergies
+main()
 
