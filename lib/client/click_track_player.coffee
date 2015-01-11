@@ -1,5 +1,5 @@
 class BeatDetector.ClickTrackPlayer
-  constructor: (@_audioContext, @_timeline) ->
+  constructor: (@_audioContext, @_timeline, @_beatFlash) ->
     BeatDetector.loadAudioFromUrl '/metronome.ogg', (arrayBuffer) =>
       @_metronomeAudioSample = new BeatDetector.ArrayBufferAudioSample(
         arrayBuffer)
@@ -24,7 +24,6 @@ class BeatDetector.ClickTrackPlayer
       0.3
     else
       1
-    console.log playWithClick
     @_audioSample.tryPlay(@_trackStartTime, gain)
     @_startTime = @_audioContext.currentTime
 
@@ -35,9 +34,9 @@ class BeatDetector.ClickTrackPlayer
     if playbackTime > @_trackLength
       @_audioSample.stop()
       Session.set 'playing', @_audioSample.playing
-      # @_timeline.render(@_trackStartTime)
+      @_timeline.render(@_trackStartTime, @_trackStartTime, @_trackLength)
     return unless @_audioSample.playing
-    # @_timeline.render(playbackTime)
+    @_timeline.render(playbackTime, @_trackStartTime, @_trackLength)
     # Schedule metronome clicks so we they happen accurately
     # see:
     # http://www.html5rocks.com/en/tutorials/audio/scheduling/
@@ -56,7 +55,7 @@ class BeatDetector.ClickTrackPlayer
       #Beat!
       if @_beatsClone.length > 2
         beatTime = @_beatsClone[1] - @_beatsClone[0]
-      #beatVisualisation.render(beatTime / 2)
+      @_beatFlash.render(50)
       @_beatsClone.splice(0, 1)
       @_metronomeClickHasBeenScheduled = false
     requestAnimationFrame(@_update)
