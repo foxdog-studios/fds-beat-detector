@@ -4,7 +4,8 @@ class BeatDetector.ClickTrackPlayer
     @_frameHandle = null
     @_playWithClick = new ReactiveVar(false)
     @_playbackRate = new ReactiveVar(1)
-    BeatDetector.loadAudioFromUrl '/metronome.ogg', (arrayBuffer) =>
+    sampleUrl = '/packages/fds_beat-detector/lib/assets/metronome.ogg'
+    BeatDetector.loadAudioFromUrl sampleUrl, (arrayBuffer) =>
       @_metronomeAudioSample = new BeatDetector.ArrayBufferAudioSample(
         arrayBuffer)
       @_metronomeAudioSample.loadAudio @_audioContext

@@ -1,5 +1,11 @@
 .beat-detector-visualisation {
+  position: relative;
+  height: 300px;
+}
+
+.beat-detector-visualisation-layer {
   position: absolute;
   width: 100%;
   height: 300px;
 }
+

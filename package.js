@@ -12,6 +12,7 @@ Package.onUse(function (api) {
 
   api.use([
     'coffeescript',
+    'jquery',
     'reactive-var'
   ]);
 
@@ -26,6 +27,7 @@ Package.onUse(function (api) {
   api.addFiles('lib/client/beat_flash.coffee', 'client');
   api.addFiles('lib/client/visualisation.coffee', 'client');
   api.addFiles('lib/client/style/style.css', 'client');
+  api.addFiles('lib/assets/metronome.ogg', 'client');
 });
 
 
