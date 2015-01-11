@@ -19,28 +19,31 @@ class BeatDetector.ClickTrackPlayer
   play: (@_beatManager, options = {}) ->
     options = _.defaults options,
       startTime: 0
+      audioStartTime: @_audioContext.currentTime
 
     @stop()
 
     @_playing.set true
 
     @_beatsClone = @_beatManager.getBeats().slice(0)
-    @_trackStartTime = options.startTime / @_playbackRate.get()
+    @_startTime = options.startTime / @_playbackRate.get()
 
     @_metronomeClickHasBeenScheduled = false
 
     @_trackLength = @_beatManager.getTrackLengthSeconds()
 
-    while @_beatsClone.length and @_beatsClone[0] < @_trackStartTime
+    while @_beatsClone.length and @_beatsClone[0] < @_startTime
       @_beatsClone.splice(0, 1)
 
-    @_startTime = @_audioContext.currentTime
+    @_audioStartTime = options.audioStartTime
 
     @_frameHandle = requestAnimationFrame(@_update)
 
   stop: ->
     if @_frameHandle?
       cancelAnimationFrame @_frameHandle
+    if @_metronomeAudioSample?
+      @_metronomeAudioSample.stop()
     @_playing.set false
 
   isPlaying: ->
@@ -55,17 +58,23 @@ class BeatDetector.ClickTrackPlayer
   _update: =>
     @_frameHandle = null
 
-    playbackTime = @_audioContext.currentTime - @_startTime + \
-      @_trackStartTime / @_playbackRate.get()
+    distanceFromStartTime = @_audioContext.currentTime - @_audioStartTime
+
+    if distanceFromStartTime < 0
+      @_frameHandle = requestAnimationFrame(@_update)
+      return
+
+    playbackTime = @_audioContext.currentTime - @_audioStartTime + \
+      @_startTime / @_playbackRate.get()
     @_trackLength = @_beatManager.getTrackLengthSeconds() / @_playbackRate.get()
     if playbackTime > @_trackLength
-      @_timeline.render(@_trackStartTime, @_trackStartTime, @_trackLength)
+      @_timeline.render(@_startTime, 0, @_trackLength)
       @_playing.set false
 
     unless @_playing.get()
       return
 
-    @_timeline.render(playbackTime, @_trackStartTime, @_trackLength)
+    @_timeline.render(playbackTime, 0, @_trackLength)
 
     # Schedule metronome clicks so we they happen accurately
     # see:
