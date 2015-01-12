@@ -330,5 +330,6 @@ main = ->
       beats: beatDetector.beats
       interpolatedBeats: beatDetector.interpolatedBeats
       maximumEnergies: beatDetector.maximumEnergies
+      id: data.id
 main()
 

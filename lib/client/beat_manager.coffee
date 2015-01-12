@@ -5,6 +5,52 @@ NUMBER_OF_PREVIOUS_SAMPLES = 42
 MAX_BPM = 253
 CHANNELS = 1
 
+class WorkerQueue
+  class WorkerQueueImpl
+    constructor: ->
+      @_poolSize = navigator.hardwareConcurrency or 1
+      @_workerPool = []
+      @_freeWorkers = []
+      @_taskQueue = []
+      @_callbackMap = {}
+      @_nextId = 0
+      for i in [0..@_poolSize]
+        worker = getWorker()
+        @_workerPool.push worker
+        @_freeWorkers.push worker
+        worker.addEventListener 'message', @_onWebworkerMessage
+
+    _onWebworkerMessage: (event) =>
+      callback = @_callbackMap[event.data.id]
+      callback?(event)
+      @_freeWorkers.push event.target
+      @_tryToWork()
+
+    _tryToWork: ->
+      worker = @_freeWorkers.shift()
+      return unless worker?
+      task = @_taskQueue.shift()
+      unless task?
+        @_freeWorkers.splice(0, 0, worker)
+        return
+      @_callbackMap[task.id] = task.callback
+      message = task.message
+      message.id = task.id
+      worker.postMessage message
+
+    addToQueue: (message, callback) ->
+      @_taskQueue.push
+        message: message
+        callback: callback
+        id: @_nextId
+      @_nextId += 1
+      @_tryToWork()
+
+  workQueue = null
+
+  @getInstance: ->
+    workQueue ?= new WorkerQueueImpl
+
 BeatDetector.getAudioContext = ->
   AudioContext = window.AudioContext or window.webkitAudioContext
   unless audioContext?
@@ -41,9 +87,6 @@ class BeatDetector.BeatManager
     @_beats = new ReactiveVar([])
     @_interpolatedBeats = new ReactiveVar([])
     @_maximumEnergies = new ReactiveVar([])
-    @_worker = getWorker()
-
-    @_worker.addEventListener 'message', @_onWorkerMessage
 
   _onWorkerMessage: (event) =>
     beatDetector = event.data
@@ -60,7 +103,7 @@ class BeatDetector.BeatManager
     @_arrayBuffer.get()
 
   setArrayBuffer: (arrayBuffer) ->
-    @_arrayBuffer.set(arrayBuffer)
+    @_updateAudioFromArrayBuffer(arrayBuffer)
 
   getAudioSample: ->
     @_audioSample.get()
@@ -137,7 +180,7 @@ class BeatDetector.BeatManager
     @_updateBeats()
 
   _updateBeats: ->
-    @_worker.postMessage
+    WorkerQueue.getInstance().addToQueue
       pcmData: @_pcmAudioData.get()
       previousEnergyVarianceCoefficient: @_varianceCoefficient.get()
       previousAverageEnergyCoefficient: @_previousAverageEnergyCoefficient.get(),
@@ -145,4 +188,6 @@ class BeatDetector.BeatManager
       numberOfPreviousSamples: @_numberOfPreviousEnergies.get()
       maxBpm: @_maxBpm.get()
       sampleRate: @_audioContext.sampleRate
+    ,
+      @_onWorkerMessage
 
